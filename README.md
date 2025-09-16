@@ -21,7 +21,7 @@ cmake --build .
 In **Debug mode**, the compiler is interactive — no command line arguments required.
 
 ```text
-$>c85
+$> c85
 
 Debug mode: No command line arguments required.
 Enter the filepath of the source file:
@@ -33,7 +33,7 @@ Enter the filepath of the output file:
 In **Release mode**, the compiler expects arguments:
 
 ```bash
-$>c85 <sourceFile> <outputFile> [-r]
+$> c85 <sourceFile> <outputFile> [-r]
 ```
 
 * `<sourceFile>`: Path to input assembly file
