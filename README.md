@@ -1,4 +1,4 @@
-﻿# 8085 Mini Compiler
+﻿# Compiler 8085
 
 A simple compiler for Intel 8085 opcodes.  
 It takes 8085 assembly code as input and produces the corresponding machine code or raw binary as output.  
