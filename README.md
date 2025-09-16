@@ -1,4 +1,4 @@
-﻿# 8085 Mini Compiler
+﻿# Compiler 8085
 
 A simple compiler for Intel 8085 opcodes.  
 It takes 8085 assembly code as input and produces the corresponding machine code or raw binary as output.  
@@ -7,7 +7,7 @@ Designed as an educational project to explore compiler phases like lexing, parsi
 ## Build Instructions
 
 ```bash
-git clone https://github.com/your-username/Compiler85.git
+git clone https://github.com/Auth0x78/Compiler85.git
 cd Compiler85
 mkdir build && cd build
 cmake ..
@@ -21,7 +21,8 @@ cmake --build .
 In **Debug mode**, the compiler is interactive — no command line arguments required.
 
 ```text
-> c85
+$> c85
+
 Debug mode: No command line arguments required.
 Enter the filepath of the source file:
 Enter the filepath of the output file:
@@ -32,12 +33,12 @@ Enter the filepath of the output file:
 In **Release mode**, the compiler expects arguments:
 
 ```bash
-c85 <sourceFile> <outputFile> [-r]
+$> c85 <sourceFile> <outputFile> [-r]
 ```
 
 * `<sourceFile>`: Path to input assembly file
 * `<outputFile>`: Path where machine code will be written
-* `-r` (optional): Output raw binary instead of default format
+* `-r` (optional): Output raw binary instead of default format is readable hex-dump
 
 Example:
 
