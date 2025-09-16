@@ -7,7 +7,7 @@ Designed as an educational project to explore compiler phases like lexing, parsi
 ## Build Instructions
 
 ```bash
-git clone https://github.com/your-username/Compiler85.git
+git clone https://github.com/Auth0x78/Compiler85.git
 cd Compiler85
 mkdir build && cd build
 cmake ..
