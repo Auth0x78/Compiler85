@@ -38,7 +38,7 @@ $> c85 <sourceFile> <outputFile> [-r]
 
 * `<sourceFile>`: Path to input assembly file
 * `<outputFile>`: Path where machine code will be written
-* `-r` (optional): Output raw binary instead of default format
+* `-r` (optional): Output raw binary instead of default format is readable hex-dump
 
 Example:
 
