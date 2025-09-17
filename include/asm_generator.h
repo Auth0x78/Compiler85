@@ -2,6 +2,11 @@
 #include "ASTStructs.h"
 
 #define DEFAULT_BLOCK_SIZE 32
+#define UNREACHABLE(msg)                                                       \
+  {                                                                            \
+    Logger::fmtLog(LogLevel::Error, "[GEN]: " msg);                            \
+    exit(0x00BAD);                                                             \
+  }
 
 using namespace std;
 
@@ -32,11 +37,15 @@ struct BinaryBlock {
     return *this;
   }
 
-  // Helper function
-  void AppendByte(uint8_t byte) { code.push_back(byte); }
+  // Helper function, returns the absolute address of the byte pushed
+  uint16_t AppendByte(uint8_t byte) {
+    code.push_back(byte);
+    return startAddr + code.size() - 1;
+  }
 
-  void AppendData(const vector<uint8_t> &data) {
+  uint16_t AppendData(const vector<uint8_t> &data) {
     code.insert(code.end(), data.begin(), data.end());
+    return startAddr + code.size() - data.size();
   }
 };
 
@@ -48,11 +57,13 @@ public:
   vector<BinaryBlock> &GenerateBinary();
 
   void GenerateStatement(ASTStatement &stmt);
+  void GenerateMnemonics(const ast::Ptr<ASTMnemonics> &mnemonic);
 
   BinaryBlock &GetCurrentBlock();
   BinaryBlock &CreateCodeBlock();
 
   long long blockIndex;
+  unordered_map<string, ast::symbolDebugInfo> m_symbolTable;
 
 private:
   vector<BinaryBlock> m_blocks;
@@ -60,7 +71,4 @@ private:
   size_t memAddrOffset;
   const size_t memAddrMax;
   ast::Ptr<ASTProgram> m_program;
-
-  // Assign each label a unique_id
-  unordered_map<string, ast::symbolDebugInfo> m_symbolTable;
 };

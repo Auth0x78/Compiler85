@@ -87,8 +87,10 @@ ast::Ptr<ASTLabelDef> Parser::parseLabelDef() {
   }
 
   labelDef->tokenLabel = label;
-  labelDef->labelDbgInfo = {
-      .lineNumber = label.line, .address = 0x0000, .fileAddress = 0x0000};
+  labelDef->labelDbgInfo = {.lineNumber = label.line,
+                            .address = 0x0000,
+                            .flag = 1,
+                            .blockOffset = 0x0000};
 
   if (peek().has_value() && peek().value().type == TokenType::Colon)
     consume();

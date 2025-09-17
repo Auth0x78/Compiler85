@@ -23,15 +23,26 @@ void AsmGenerator::GenerateStatement(ASTStatement &stmt) {
     AsmGenerator *gen;
     void operator()(const ast::Ptr<ASTLabelDef> &labelDef) {
       if (!labelDef)
-        return;
+        UNREACHABLE("Label Defination was null in code generation!");
+      BinaryBlock &block = gen->GetCurrentBlock();
+      // Update symbol table with current address
+      auto &[line, addr, flag, blockOffset] =
+          gen->m_symbolTable[labelDef->tokenLabel.rawText];
+      flag = 2;
+      blockOffset = block.code.size();
+      addr = block.startAddr + addr;
+
+      // Now generate the mnemonic associated with the label
+      gen->GenerateMnemonics(labelDef->mnemonic);
     }
     void operator()(const ast::Ptr<ASTMnemonics> &mnemonic) {
       if (!mnemonic)
-        return;
+        UNREACHABLE("Mnemonic was null in code generation!");
+      gen->GenerateMnemonics(mnemonic);
     }
     void operator()(const ast::Ptr<ASTDirective> &directive) {
       if (!directive)
-        return;
+        UNREACHABLE("Directive was null in code generation!");
 
       switch (directive->type) {
       case ast::DirectiveType::ORG: {
@@ -57,6 +68,16 @@ void AsmGenerator::GenerateStatement(ASTStatement &stmt) {
   };
 
   std::visit(StmtVisitor{this}, stmt.sval);
+}
+
+void AsmGenerator::GenerateMnemonics(const ast::Ptr<ASTMnemonics> &mnemonic) {
+  if (!mnemonic)
+    UNREACHABLE("Mnemonic was null in code generation!");
+  switch (mnemonic->instruction) {
+  default:
+    UNREACHABLE("'%s' NYI", mnemonic->tokenMnemonic.rawText.c_str());
+    break;
+  }
 }
 
 BinaryBlock &AsmGenerator::GetCurrentBlock() { return m_blocks[blockIndex]; }

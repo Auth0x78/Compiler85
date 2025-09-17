@@ -12,9 +12,11 @@ using DirectiveType = TokenType;
 
 // Symbol debug info struct
 struct symbolDebugInfo {
-  int lineNumber;
-  uint16_t address;   // will be filled in generator stage
-  size_t fileAddress; // will be used in symbol resolution
+  int lineNumber = 0;
+  uint16_t address = 0; // will be filled in generator stage
+  // default flag = 0 (uninitialized state), 1 (line number init), 2 (Rest Both)
+  char flag = 0;
+  size_t blockOffset = 0; // will be used in symbol resolution
 };
 
 enum class Register : char {

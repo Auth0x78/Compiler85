@@ -64,6 +64,8 @@ int main(int argv, char *argc[]) {
 #endif // DEBUG
 
   // Code generation
+  AsmGenerator generator(program, symbolTable);
+  vector<BinaryBlock> bin = move(generator.GenerateBinary());
 
   // TODO: Further compilation steps would go here symbol resolution
 

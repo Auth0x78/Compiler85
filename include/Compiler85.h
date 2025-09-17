@@ -4,6 +4,7 @@
 #pragma once
 
 #include <Logger.h>
+#include <asm_generator.h>
 #include <asm_lexer.h>
 #include <asm_parser.h>
 #include <fstream>
