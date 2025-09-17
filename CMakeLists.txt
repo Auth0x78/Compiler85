@@ -15,7 +15,7 @@ project ("Compiler85")
 include_directories("include")
 
 # Add source to this project's executable.
-add_executable (Compiler85 "src/Compiler85.cpp" "include/Compiler85.h" "include/Logger.h" "src/Logger.cpp" "include/asm_lexer.h" "src/asm_lexer.cpp" "include/asm_parser.h" "src/asm_parser.cpp" "include/ASTStructs.h")
+add_executable (Compiler85 "src/Compiler85.cpp" "include/Compiler85.h" "include/Logger.h" "src/Logger.cpp" "include/asm_lexer.h" "src/asm_lexer.cpp" "include/asm_parser.h" "src/asm_parser.cpp" "include/ASTStructs.h" "include/asm_generator.h" "src/asm_generator.cpp")
 
 # Keep project name "Compiler85" but rename binary to "c85"
 set_target_properties(Compiler85 PROPERTIES OUTPUT_NAME "c85")

@@ -48,6 +48,7 @@ int main(int argv, char *argc[]) {
   // AST Parser
   Parser asmParser(tokens);
   ast::Ptr<ASTProgram> program = move(asmParser.parseProgram());
+  unordered_map symbolTable = move(asmParser.getSymbolTable());
 #ifdef DEBUG
   if (program)
     program->Print();
@@ -61,8 +62,10 @@ int main(int argv, char *argc[]) {
     return 1;
   }
 #endif // DEBUG
-  // TODO: Further compilation steps would go here (machine code gen, symbol
-  // resolution)
+
+  // Code generation
+
+  // TODO: Further compilation steps would go here symbol resolution
 
   return 0;
 }
