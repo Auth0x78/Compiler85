@@ -2,9 +2,10 @@
 #include "ASTStructs.h"
 
 #define DEFAULT_BLOCK_SIZE 32
-#define UNREACHABLE(msg)                                                       \
+#define UNREACHABLE(fmt, ...)                                                  \
   {                                                                            \
-    Logger::fmtLog(LogLevel::Error, "[GEN]: " msg);                            \
+    Logger::fmtLog(LogLevel::Error, "[GEN, Line: %d]: " fmt, __LINE__ - 1,     \
+                   __VA_ARGS__);                                               \
     exit(0x00BAD);                                                             \
   }
 

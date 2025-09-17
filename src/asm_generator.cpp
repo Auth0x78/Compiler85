@@ -75,7 +75,8 @@ void AsmGenerator::GenerateMnemonics(const ast::Ptr<ASTMnemonics> &mnemonic) {
     UNREACHABLE("Mnemonic was null in code generation!");
   switch (mnemonic->instruction) {
   default:
-    UNREACHABLE("'%s' NYI", mnemonic->tokenMnemonic.rawText.c_str());
+    UNREACHABLE("Instruction '%s' NYI!",
+                mnemonic->tokenMnemonic.rawText.c_str());
     break;
   }
 }
