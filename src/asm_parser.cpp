@@ -79,8 +79,16 @@ ast::Ptr<ASTLabelDef> Parser::parseLabelDef() {
   ast::Ptr<ASTLabelDef> labelDef = std::make_unique<ASTLabelDef>();
   Token label = consume();
 
+  if (m_symbolTable.find(label.rawText) != m_symbolTable.end()) {
+    Logger::fmtLog(LogLevel::Error,
+                   "Redefinition of label '%s' on line: %d, column: %d",
+                   label.rawText.c_str(), label.line, label.column);
+    exit(1);
+  }
+
   labelDef->tokenLabel = label;
-  labelDef->labelDbgInfo = {.lineNumber = label.line, .address = 0x0000};
+  labelDef->labelDbgInfo = {
+      .lineNumber = label.line, .address = 0x0000, .fileAddress = 0x0000};
 
   if (peek().has_value() && peek().value().type == TokenType::Colon)
     consume();
