@@ -11,7 +11,6 @@ vector<BinaryBlock> &AsmGenerator::GenerateBinary() {
   for (auto &stmt : m_program->statements) {
     GenerateStatement(stmt);
   }
-
   return m_blocks;
 }
 
@@ -23,7 +22,7 @@ void AsmGenerator::GenerateStatement(ASTStatement &stmt) {
     AsmGenerator *gen;
     void operator()(const ast::Ptr<ASTLabelDef> &labelDef) {
       if (!labelDef)
-        UNREACHABLE("Label Defination was null in code generation!");
+        UNREACHABLE("Label Definition was null in code generation!");
       BinaryBlock &block = gen->GetCurrentBlock();
       // Update symbol table with current address
       auto &[line, addr, flag, blockOffset] =
@@ -73,7 +72,51 @@ void AsmGenerator::GenerateStatement(ASTStatement &stmt) {
 void AsmGenerator::GenerateMnemonics(const ast::Ptr<ASTMnemonics> &mnemonic) {
   if (!mnemonic)
     UNREACHABLE("Mnemonic was null in code generation!");
+  BinaryBlock &block = GetCurrentBlock();
+
   switch (mnemonic->instruction) {
+  case ast::InstructionType::NOP:
+    block.AppendByte(0x00);
+    break;
+  case ast::InstructionType::RAL:
+    block.AppendByte(0x17);
+    break;
+  case ast::InstructionType::RAR:
+    block.AppendByte(0x1F);
+    break;
+  case ast::InstructionType::RC:
+    block.AppendByte(0xD8);
+    break;
+  case ast::InstructionType::RET:
+    block.AppendByte(0xC9);
+    break;
+  case ast::InstructionType::RIM:
+    block.AppendByte(0x20);
+    break;
+  case ast::InstructionType::RLC:
+    block.AppendByte(0x07);
+    break;
+  case ast::InstructionType::RM:
+    block.AppendByte(0xF8);
+    break;
+  case ast::InstructionType::RNC:
+    block.AppendByte(0xD0);
+    break;
+  case ast::InstructionType::HLT:
+    block.AppendByte(0x76);
+    break;
+  case ast::InstructionType::CMA:
+    block.AppendByte(0x2F);
+    break;
+  case ast::InstructionType::CMC:
+    block.AppendByte(0x3F);
+    break;
+  case ast::InstructionType::DI:
+    block.AppendByte(0xF3);
+    break;
+  case ast::InstructionType::EI:
+    block.AppendByte(0xFB);
+    break;
   default:
     UNREACHABLE("Instruction '%s' NYI!",
                 mnemonic->tokenMnemonic.rawText.c_str());

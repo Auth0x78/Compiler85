@@ -136,29 +136,29 @@ ast::Ptr<ASTMnemonics> Parser::parseMnemonic() {
   switch (mnemonic->instruction) {
   // TODO: Parse all mnemonics
   // Parse 'instruction <addr16>'
-  case ast::InstuctionType::LDA:
-  case ast::InstuctionType::LHLD:
-  case ast::InstuctionType::SHLD:
-  case ast::InstuctionType::STA:
+  case ast::InstructionType::LDA:
+  case ast::InstructionType::LHLD:
+  case ast::InstructionType::SHLD:
+  case ast::InstructionType::STA:
     mnemonic->operandList = parseOpList({ast::OperandType::ImmAddr});
     break;
 
   // Parse 'instruction <imm8>'
-  case ast::InstuctionType::ACI:
-  case ast::InstuctionType::ADI:
-  case ast::InstuctionType::ANI:
-  case ast::InstuctionType::CPI:
-  case ast::InstuctionType::IN:
-  case ast::InstuctionType::ORI:
-  case ast::InstuctionType::OUT:
-  case ast::InstuctionType::SBI:
-  case ast::InstuctionType::SUI:
-  case ast::InstuctionType::XRI:
+  case ast::InstructionType::ACI:
+  case ast::InstructionType::ADI:
+  case ast::InstructionType::ANI:
+  case ast::InstructionType::CPI:
+  case ast::InstructionType::IN:
+  case ast::InstructionType::ORI:
+  case ast::InstructionType::OUT:
+  case ast::InstructionType::SBI:
+  case ast::InstructionType::SUI:
+  case ast::InstructionType::XRI:
     mnemonic->operandList = parseOpList({ast::OperandType::ImmData});
     break;
 
   // Parse 'RST [0..7]'
-  case ast::InstuctionType::RST: {
+  case ast::InstructionType::RST: {
     mnemonic->operandList = parseOpList({ast::OperandType::ImmData});
     uint8_t val = getImmValue();
     if (val < 0 || val > 7) {
@@ -173,10 +173,10 @@ ast::Ptr<ASTMnemonics> Parser::parseMnemonic() {
 
   // Parse 'instruction <ex_reg>' ,
   // i.e, register pair + SP register (but not psw)
-  case ast::InstuctionType::DAD:
-  case ast::InstuctionType::DCX:
-  case ast::InstuctionType::INX:
-  case ast::InstuctionType::LXI: {
+  case ast::InstructionType::DAD:
+  case ast::InstructionType::DCX:
+  case ast::InstructionType::INX:
+  case ast::InstructionType::LXI: {
     // Main logic of the opcode
     mnemonic->operandList = parseOpList({ast::OperandType::exRegister});
     // Error handling for invalid operand type PSW
@@ -191,8 +191,8 @@ ast::Ptr<ASTMnemonics> Parser::parseMnemonic() {
   } break;
 
   // Parse LDAX ('B' | 'D') & STAX ('B' | 'D')
-  case ast::InstuctionType::LDAX:
-  case ast::InstuctionType::STAX: {
+  case ast::InstructionType::LDAX:
+  case ast::InstructionType::STAX: {
     mnemonic->operandList = parseOpList({ast::OperandType::exRegister});
     auto type = getExRegType();
 
@@ -206,8 +206,8 @@ ast::Ptr<ASTMnemonics> Parser::parseMnemonic() {
       exit(1);
     }
   } break;
-  case ast::InstuctionType::POP:
-  case ast::InstuctionType::PUSH: {
+  case ast::InstructionType::POP:
+  case ast::InstructionType::PUSH: {
     mnemonic->operandList = parseOpList({ast::OperandType::exRegister});
     auto type = getExRegType();
 
@@ -222,48 +222,48 @@ ast::Ptr<ASTMnemonics> Parser::parseMnemonic() {
   } break;
 
   // Parse 'instruction <reg>'
-  case ast::InstuctionType::ADC:
-  case ast::InstuctionType::ADD:
-  case ast::InstuctionType::ANA:
-  case ast::InstuctionType::CMP:
-  case ast::InstuctionType::DCR:
-  case ast::InstuctionType::INR:
-  case ast::InstuctionType::ORA:
-  case ast::InstuctionType::SBB:
-  case ast::InstuctionType::SUB:
-  case ast::InstuctionType::XRA:
+  case ast::InstructionType::ADC:
+  case ast::InstructionType::ADD:
+  case ast::InstructionType::ANA:
+  case ast::InstructionType::CMP:
+  case ast::InstructionType::DCR:
+  case ast::InstructionType::INR:
+  case ast::InstructionType::ORA:
+  case ast::InstructionType::SBB:
+  case ast::InstructionType::SUB:
+  case ast::InstructionType::XRA:
     mnemonic->operandList = parseOpList({ast::OperandType::_Register});
     break;
 
   // Parse 'instruction <labelRef>'
-  case ast::InstuctionType::CALL:
-  case ast::InstuctionType::CC:
-  case ast::InstuctionType::CM:
-  case ast::InstuctionType::CNC:
-  case ast::InstuctionType::CNZ:
-  case ast::InstuctionType::CP:
-  case ast::InstuctionType::CPE:
-  case ast::InstuctionType::CPO:
-  case ast::InstuctionType::CZ:
-  case ast::InstuctionType::JC:
-  case ast::InstuctionType::JM:
-  case ast::InstuctionType::JMP:
-  case ast::InstuctionType::JNC:
-  case ast::InstuctionType::JNZ:
-  case ast::InstuctionType::JP:
-  case ast::InstuctionType::JPE:
-  case ast::InstuctionType::JPO:
-  case ast::InstuctionType::JZ:
+  case ast::InstructionType::CALL:
+  case ast::InstructionType::CC:
+  case ast::InstructionType::CM:
+  case ast::InstructionType::CNC:
+  case ast::InstructionType::CNZ:
+  case ast::InstructionType::CP:
+  case ast::InstructionType::CPE:
+  case ast::InstructionType::CPO:
+  case ast::InstructionType::CZ:
+  case ast::InstructionType::JC:
+  case ast::InstructionType::JM:
+  case ast::InstructionType::JMP:
+  case ast::InstructionType::JNC:
+  case ast::InstructionType::JNZ:
+  case ast::InstructionType::JP:
+  case ast::InstructionType::JPE:
+  case ast::InstructionType::JPO:
+  case ast::InstructionType::JZ:
     mnemonic->operandList = parseOpList({ast::OperandType::LabelRef});
     break;
 
   // Parse double operand instructions MOV & MVI
-  case ast::InstuctionType::MOV:
+  case ast::InstructionType::MOV:
     // MOV r, r | MOV M, r
     mnemonic->operandList =
         parseOpList({ast::OperandType::_Register, ast::OperandType::_Register});
     break;
-  case ast::InstuctionType::MVI:
+  case ast::InstructionType::MVI:
     mnemonic->operandList =
         parseOpList({ast::OperandType::_Register, ast::OperandType::ImmData});
     break;

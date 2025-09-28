@@ -7,7 +7,7 @@
 namespace ast {
 template <typename T> using Ptr = std::unique_ptr<T>;
 
-using InstuctionType = TokenType;
+using InstructionType = TokenType;
 using DirectiveType = TokenType;
 
 // Symbol debug info struct
@@ -192,7 +192,7 @@ struct ASTDirective {
 };
 
 struct ASTMnemonics {
-  ast::InstuctionType instruction;
+  ast::InstructionType instruction;
 
   ast::Ptr<ASTOperandList> operandList;
 
