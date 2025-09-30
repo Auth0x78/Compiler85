@@ -50,7 +50,8 @@ c85 examples/hello.asm build/hello.bin -r
 
 * [x] **Lexer** – tokenize assembly source
 * [x] **Parser** – build AST from tokens
-* [ ] **Code Generation** – lower AST into 8085 machine code
-* [ ] **Symbol Resolution & Linking** – resolve labels, addresses, and forward references
+* [x] **Code Generation** – lower AST into 8085 machine code
+* [x] **Symbol Resolution & Linking** – resolve labels, addresses, and forward references
 * [ ] **Object File Generation** – outputs raw machine code or raw (hex-format) binary output to file
+* [ ] **Test Case & Output Verification** - verify output against known test cases
 
