@@ -14,7 +14,8 @@ using DirectiveType = TokenType;
 struct symbolDebugInfo {
   int lineNumber = 0;
   uint16_t address = 0; // will be filled in generator stage
-  // default flag = 0 (uninitialized state), 1 (line number init), 2 (Rest Both)
+  // default flag = 0 (uninitialized state), 1 (line number init.)
+  // 2 (Initialized all fields)
   char flag = 0;
   size_t blockOffset = 0; // will be used in symbol resolution
 };
@@ -33,11 +34,12 @@ enum class Register : char {
 enum class ExtendedRegister : char { B, D, H, SP, PSW };
 
 enum class OperandType {
+  None,
   ImmData,
   ImmAddr,
   LabelRef,
   _Register,
-  exRegister,
+  exRegister
 };
 }; // namespace ast
 

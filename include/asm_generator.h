@@ -1,7 +1,8 @@
 #pragma once
 #include "ASTStructs.h"
 
-#define DEFAULT_BLOCK_SIZE 32
+using namespace std;
+
 #define UNREACHABLE(fmt, ...)                                                  \
   {                                                                            \
     Logger::fmtLog(LogLevel::Error, "[GEN, Line: %d]: " fmt, __LINE__ - 1,     \
@@ -9,16 +10,15 @@
     exit(0x00BAD);                                                             \
   }
 
-using namespace std;
+constexpr int DEFAULT_BLOCK_SIZE = 32;
 
 struct BinaryBlock {
   uint16_t startAddr;
   vector<uint8_t> code;
-  // Store the offsets to where the label was used in the code
-  vector<pair<string, uint16_t>> unresolvedLabel;
+  uint8_t overflow;
 
   // Default constructor
-  BinaryBlock() : startAddr(0), unresolvedLabel({}) {
+  BinaryBlock() : startAddr(0), overflow(0) {
     code.reserve(DEFAULT_BLOCK_SIZE);
   }
 
@@ -28,14 +28,20 @@ struct BinaryBlock {
 
   // Only keep a move constructor
   BinaryBlock(BinaryBlock &&other) noexcept
-      : startAddr(other.startAddr), code(move(other.code)),
-        unresolvedLabel(move(other.unresolvedLabel)) {}
+      : startAddr(other.startAddr), code(move(other.code)) {}
 
   BinaryBlock &operator=(BinaryBlock &&other) noexcept {
     startAddr = other.startAddr;
+    overflow = other.overflow;
     code = move(other.code);
-    unresolvedLabel = move(other.unresolvedLabel);
     return *this;
+  }
+
+  uint8_t &operator[](size_t index) {
+    if (index < code.size())
+      return code[index];
+    else
+      return overflow;
   }
 
   // Helper function, returns the absolute address of the byte pushed
@@ -59,6 +65,15 @@ public:
 
   void GenerateStatement(ASTStatement &stmt);
   void GenerateMnemonics(const ast::Ptr<ASTMnemonics> &mnemonic);
+  void GenerateImmOperands(const ast::Ptr<ASTOperand> &operand,
+                           const ast::OperandType expectedType);
+
+  int TryRegisterMap(const ast::Ptr<ASTOperand> &operand);
+  int TryRegisterExMap(const ast::Ptr<ASTOperand> &operand);
+
+  constexpr uint8_t registerMapping(const ast::Register reg);
+
+  constexpr uint8_t registerExMapping(const ast::ExtendedRegister regEx);
 
   BinaryBlock &GetCurrentBlock();
   BinaryBlock &CreateCodeBlock();
@@ -66,10 +81,8 @@ public:
   long long blockIndex;
   unordered_map<string, ast::symbolDebugInfo> m_symbolTable;
 
-private:
+  // Store the block id, block offset to where the unresolved label is found
+  unordered_map<string, pair<size_t, uint16_t>> m_unresolvedLabel;
   vector<BinaryBlock> m_blocks;
-
-  size_t memAddrOffset;
-  const size_t memAddrMax;
   ast::Ptr<ASTProgram> m_program;
 };

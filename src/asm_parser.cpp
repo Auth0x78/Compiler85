@@ -436,7 +436,6 @@ ast::Ptr<ASTOperand> Parser::parseOperand(const ast::OperandType &expectType) {
     }
     break;
   case ast::OperandType::LabelRef:
-    // TODO: Verify the Label isn't part of recognized words
     if (peek().has_value() && peek().value().type == TokenType::Identifier) {
       ast::Ptr<ASTLabelRef> labelRef = std::make_unique<ASTLabelRef>();
       labelRef->label = operandToken;
