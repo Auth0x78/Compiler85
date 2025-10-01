@@ -53,6 +53,35 @@ $> c85 <sourceFile> <outputFile> [options]
   | `-d`           | Generate a human-readable memory dump of the compiled program      |
   | `-h`, `--help` | Show this help message                                             |
 
+## 🧪 Adding Test Cases
+
+Each instruction in the Intel 8085 has its own test case .asm file and a golden .dump file.
+- `test_<test_case_name>.asm` file in `tests/test_input/` → contains the mnemonic  
+- `expect_<test_case_name>.dump` file in `tests/test_expect/` → contains expected opcode bytes  
+
+### Creating new test case
+
+1. Create a `test_<test_case_name>.asm` file in `tests/test_input/` with the mnemonic.
+2. Create the matching `expect_<test_case_name>.dump` file in `tests/test_expect/` with expected hex bytes.
+NOTE: Replace test_case_name with the name of the test you want to give to it
+
+### Example
+`test_HLT.asm`:
+```asm
+HLT
+````
+
+`expect_HLT.dump`:
+
+```
+0 <- Expected return code of the binary
+0000: 76 <- Expected output/memory dump of the program.
+```
+
+### Pre-generated Test Cases
+Most instructions are covered.
+To add new cases, extend the mnemonics tests.
+
 #### Examples
 
 Generate Intel HEX (default):
@@ -90,5 +119,6 @@ c85 examples/hello.asm build/hello.bin -r
 * [x] **Code Generation** – lower AST into 8085 machine code
 * [x] **Symbol Resolution & Linking** – resolve labels, addresses, and forward references
 * [x] **Object File Generation** – outputs raw machine code or raw (hex-format) binary output to file
-* [ ] **Test Case & Output Verification** - verify output against known test cases
+* [x] **Test Case & Output Verification** - verify output against known test cases
+* [ ] **Extend Test Cases** - check for every possible point of failure of the application
 
