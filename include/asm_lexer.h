@@ -108,6 +108,7 @@ enum class TokenType : uint16_t {
   // Non-instruction tokens
   Identifier, // labels
   Number,     // numeric constants
+  HexOrIdent,
   Comma,
   Colon,
   EndOfLine,

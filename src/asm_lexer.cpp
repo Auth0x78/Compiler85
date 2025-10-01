@@ -98,6 +98,37 @@ const static unordered_map<string, TokenType> keywordToToken = {
 Lexer::Lexer(string &src)
     : m_source(std::move(src)), m_pos(0), m_line(1), m_col(0) {}
 
+static bool isHex(char c) {
+  switch (c) {
+  case 'A':
+  case 'a':
+  case 'B':
+  case 'b':
+  case 'C':
+  case 'c':
+  case 'D':
+  case 'd':
+  case 'E':
+  case 'e':
+  case 'F':
+  case 'f':
+    return true;
+  }
+
+  return false;
+}
+
+static bool isValidHexStr(const string &str) {
+  // Last character should be H to signify hex
+  int last = str.size() - 1;
+  for (int i = 0; i < last; ++i) {
+    if (!isdigit(str[i]) && !isHex(str[i]))
+      return false;
+  }
+
+  return tolower(str[last]) == 'h';
+}
+
 vector<Token> Lexer::tokenize() {
   vector<Token> tokens;
 
@@ -113,18 +144,25 @@ vector<Token> Lexer::tokenize() {
     } else if (isalpha(curr)) {
       string curr_str(1, curr);
       while (peek().has_value() &&
-             (isalpha(peek().value()) || peek().value() == '_'))
+             (isalpha(peek().value()) || peek().value() == '_' ||
+              isdigit(peek().value())))
         curr_str += consume();
 
       if (keywordToToken.find(curr_str) != keywordToToken.end())
         tokens.emplace_back(createToken(keywordToToken.at(curr_str), curr_str));
-      else
-        tokens.emplace_back(createToken(TokenType::Identifier, curr_str));
+      else {
+        // can also either be a hex number, so if it is valid hex, if not then
+        // for sure ident
+        if (isValidHexStr(curr_str))
+          tokens.emplace_back(createToken(TokenType::HexOrIdent, curr_str));
+        else
+          tokens.emplace_back(createToken(TokenType::Identifier, curr_str));
+      }
     } else if (isdigit(curr)) {
       string num(1, curr);
       while (peek().has_value() &&
-             (isdigit(peek().value()) || peek().value() == 'H' ||
-              peek().value() == 'h'))
+             (isdigit(peek().value()) || isHex(peek().value()) ||
+              peek().value() == 'H' || peek().value() == 'h'))
         num += consume();
       tokens.emplace_back(createToken(TokenType::Number, num));
     } else if (curr == ',') {

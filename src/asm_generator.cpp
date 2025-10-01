@@ -8,7 +8,7 @@ AsmGenerator::AsmGenerator(
       m_symbolTable(move(symbolTable)), m_unresolvedLabel({}) {}
 
 void AsmGenerator::Print(FILE *outFile, const char *inputFileName) const {
-  fprintf(outFile, "; %s", inputFileName);
+  fprintf(outFile, "; Input File: %s\n", inputFileName);
 
   for (const auto &block : m_blocks) {
     int start = block.startAddr;
@@ -65,13 +65,13 @@ void AsmGenerator::GenerateStatement(ASTStatement &stmt) {
 
         // TODO: Only for debugging check if the memory locations are unused
         // Remove these extra checks later
-        if (gen->m_blocks[blockID][offset] = 0xff)
-          gen->m_blocks[blockID][offset] = low;
+        if (gen->m_blocks[blockID][(size_t)offset + 1] = 0xff)
+          gen->m_blocks[blockID][(size_t)offset + 1] = low;
         else
           UNREACHABLE(
               "Resolving unresolved label failed, block offset already used");
-        if (gen->m_blocks[blockID][(size_t)offset + 1] = 0xff)
-          gen->m_blocks[blockID][(size_t)offset + 1] = high;
+        if (gen->m_blocks[blockID][(size_t)offset + 2] = 0xff)
+          gen->m_blocks[blockID][(size_t)offset + 2] = high;
         else
           UNREACHABLE("Resolving unresolved label failed, block offset + 1 "
                       "already used");

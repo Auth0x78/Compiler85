@@ -28,19 +28,21 @@ int main(int argc, char *argv[]) {
         "  c85 program.asm program.dump -d\n");
   };
 
-#ifdef DEBUG
-  Logger::fmtLog(LogLevel::Info,
-                 "Debug mode: no command line arguments required.");
-  Logger::fmtLog(LogLevel::Info, "Enter the filepath of the source file: ");
-  cin >> sourceFile;
-  Logger::fmtLog(LogLevel::Info, "Enter the filepath of the output file: ");
-  cin >> outputFile;
-  rawBinary = false;
-#else
   // Handle no arguments or help flag
   if (argc < 3) {
+#ifdef DEBUG
+    Logger::fmtLog(LogLevel::Info,
+                   "Debug mode: no command line arguments required.");
+    Logger::fmtLog(LogLevel::Info, "Enter the filepath of the source file: ");
+    cin >> sourceFile;
+    Logger::fmtLog(LogLevel::Info, "Enter the filepath of the output file: ");
+    cin >> outputFile;
+    rawBinary = false;
+    memoryDumpView = true;
+#else
     printHelp();
     return 1;
+#endif
   }
 
   // Handle explicit help request
@@ -66,7 +68,6 @@ int main(int argc, char *argv[]) {
       Logger::fmtLog(LogLevel::Warning, "Unknown option: %s", arg.c_str());
     }
   }
-#endif // DEBUG
 
   // === Read source file ===
   string src;

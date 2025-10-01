@@ -7,7 +7,7 @@ static bool isDirective(TokenType tt) {
 static bool isMnemonic(TokenType tt) {
   uint16_t t = static_cast<uint16_t>(tt);
 
-  return (0 <= t && t < 79U);
+  return (0U <= t && t < 80U);
 }
 
 static optional<ast::Register> identToRegister(const string &ident) {
@@ -56,7 +56,8 @@ unordered_map<string, ast::symbolDebugInfo> &Parser::getSymbolTable() {
 void Parser::parseLine() {
   Token currToken = peek().value();
 
-  if (currToken.type == TokenType::Identifier) {
+  if (currToken.type == TokenType::Identifier ||
+      currToken.type == TokenType::HexOrIdent) {
     m_program->statements.emplace_back(parseLabelDef());
   } else if (isMnemonic(currToken.type)) {
     m_program->statements.emplace_back(parseMnemonic());
@@ -134,7 +135,6 @@ ast::Ptr<ASTMnemonics> Parser::parseMnemonic() {
   };
 
   switch (mnemonic->instruction) {
-  // TODO: Parse all mnemonics
   // Parse 'instruction <addr16>'
   case ast::InstructionType::LDA:
   case ast::InstructionType::LHLD:
@@ -285,7 +285,8 @@ ast::Ptr<ASTDirective> Parser::parseDirective() {
     directive->type = ast::DirectiveType::ORG;
     ast::Ptr<ASTImmAddr> addr = std::make_unique<ASTImmAddr>();
 
-    if (peek().has_value() && peek().value().type == TokenType::Number) {
+    if (peek().has_value() && (peek().value().type == TokenType::Number ||
+                               peek().value().type == TokenType::HexOrIdent)) {
       addr->tokenAddr = peek().value();
       addr->value = parseNumber<uint16_t>();
     } else {
@@ -300,7 +301,8 @@ ast::Ptr<ASTDirective> Parser::parseDirective() {
     directive->type = ast::DirectiveType::DB;
     ast::Ptr<ASTImmData> data = std::make_unique<ASTImmData>();
 
-    if (peek().has_value() && peek().value().type == TokenType::Number) {
+    if (peek().has_value() && (peek().value().type == TokenType::Number ||
+                               peek().value().type == TokenType::HexOrIdent)) {
       data->tokenData = peek().value();
       data->value = parseNumber<uint8_t>();
     } else {
@@ -371,7 +373,8 @@ ast::Ptr<ASTOperand> Parser::parseOperand(const ast::OperandType &expectType) {
 
   switch (expectType) {
   case ast::OperandType::ImmData:
-    if (operandToken.type == TokenType::Number) {
+    if (operandToken.type == TokenType::Number ||
+        operandToken.type == TokenType::HexOrIdent) {
       ast::Ptr<ASTImmData> immData = std::make_unique<ASTImmData>();
       immData->tokenData = operandToken;
       immData->value = parseNumber<uint8_t>();
@@ -386,7 +389,8 @@ ast::Ptr<ASTOperand> Parser::parseOperand(const ast::OperandType &expectType) {
     }
     break;
   case ast::OperandType::ImmAddr:
-    if (operandToken.type == TokenType::Number) {
+    if (operandToken.type == TokenType::Number ||
+        operandToken.type == TokenType::HexOrIdent) {
       ast::Ptr<ASTImmAddr> immAddr = std::make_unique<ASTImmAddr>();
       immAddr->tokenAddr = operandToken;
       immAddr->value = parseNumber<uint16_t>();
@@ -401,7 +405,8 @@ ast::Ptr<ASTOperand> Parser::parseOperand(const ast::OperandType &expectType) {
     }
     break;
   case ast::OperandType::_Register:
-    if (operandToken.type == TokenType::Identifier &&
+    if ((operandToken.type == TokenType::Identifier ||
+         operandToken.type == TokenType::HexOrIdent) &&
         identToRegister(operandToken.rawText).has_value()) {
       ast::Ptr<ASTRegister> reg = std::make_unique<ASTRegister>();
       reg->tokenRegister = operandToken;
@@ -418,7 +423,8 @@ ast::Ptr<ASTOperand> Parser::parseOperand(const ast::OperandType &expectType) {
     }
     break;
   case ast::OperandType::exRegister:
-    if (operandToken.type == TokenType::Identifier &&
+    if ((operandToken.type == TokenType::Identifier ||
+         operandToken.type == TokenType::HexOrIdent) &&
         identToSpRegister(operandToken.rawText).has_value()) {
       ast::Ptr<ASTExtendedRegister> spReg =
           std::make_unique<ASTExtendedRegister>();
@@ -436,7 +442,8 @@ ast::Ptr<ASTOperand> Parser::parseOperand(const ast::OperandType &expectType) {
     }
     break;
   case ast::OperandType::LabelRef:
-    if (peek().has_value() && peek().value().type == TokenType::Identifier) {
+    if (peek().has_value() && (peek().value().type == TokenType::Identifier ||
+                               peek().value().type == TokenType::HexOrIdent)) {
       ast::Ptr<ASTLabelRef> labelRef = std::make_unique<ASTLabelRef>();
       labelRef->label = operandToken;
       consume(); // Manually consume this token
@@ -445,7 +452,8 @@ ast::Ptr<ASTOperand> Parser::parseOperand(const ast::OperandType &expectType) {
     } else {
       Logger::fmtLog(LogLevel::Error,
                      "Expected a label, but found '%s' on line: %d, column: %d",
-                     operandToken);
+                     operandToken.rawText, operandToken.line,
+                     operandToken.column);
       exit(1);
     }
     break;
