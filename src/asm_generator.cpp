@@ -7,7 +7,19 @@ AsmGenerator::AsmGenerator(
     : blockIndex(-1), m_program(move(program)),
       m_symbolTable(move(symbolTable)), m_unresolvedLabel({}) {}
 
-vector<BinaryBlock> &AsmGenerator::GenerateBinary() {
+void AsmGenerator::Print(FILE *outFile, const char *inputFileName) const {
+  fprintf(outFile, "; %s", inputFileName);
+
+  for (const auto &block : m_blocks) {
+    int start = block.startAddr;
+
+    for (int i = 0; i < block.code.size(); ++i)
+      fprintf(outFile, "%04XH: %02XH\n", start + i, block.code[i]);
+    fprintf(outFile, "\n");
+  }
+}
+
+void AsmGenerator::GenerateBinary() {
   for (auto &stmt : m_program->statements) {
     GenerateStatement(stmt);
   }
@@ -20,9 +32,9 @@ vector<BinaryBlock> &AsmGenerator::GenerateBinary() {
     }
     exit(1);
   }
-
-  return m_blocks;
 }
+
+vector<BinaryBlock> &AsmGenerator::getCodeBlock() { return m_blocks; }
 
 void AsmGenerator::GenerateStatement(ASTStatement &stmt) {
   if (m_blocks.size() == 0)

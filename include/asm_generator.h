@@ -28,7 +28,8 @@ struct BinaryBlock {
 
   // Only keep a move constructor
   BinaryBlock(BinaryBlock &&other) noexcept
-      : startAddr(other.startAddr), code(move(other.code)) {}
+      : startAddr(other.startAddr), code(move(other.code)),
+        overflow(other.overflow) {}
 
   BinaryBlock &operator=(BinaryBlock &&other) noexcept {
     startAddr = other.startAddr;
@@ -61,7 +62,10 @@ public:
   AsmGenerator(ast::Ptr<ASTProgram> &program,
                unordered_map<string, ast::symbolDebugInfo> &symbolTable);
 
-  vector<BinaryBlock> &GenerateBinary();
+  void Print(FILE *outFile, const char *inputFileName) const;
+
+  void GenerateBinary();
+  vector<BinaryBlock> &getCodeBlock();
 
   void GenerateStatement(ASTStatement &stmt);
   void GenerateMnemonics(const ast::Ptr<ASTMnemonics> &mnemonic);
