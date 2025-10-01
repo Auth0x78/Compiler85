@@ -26,19 +26,56 @@ $> c85
 Debug mode: No command line arguments required.
 Enter the filepath of the source file:
 Enter the filepath of the output file:
+
 ```
 
-### Release build
+Here’s an updated and polished version of your README section:
 
-In **Release mode**, the compiler expects arguments:
+---
+
+### Release Build
+
+In **Release mode**, the compiler is run from the command line with the following syntax:
 
 ```bash
-$> c85 <sourceFile> <outputFile> [-r]
+$> c85 <sourceFile> <outputFile> [options]
 ```
 
-* `<sourceFile>`: Path to input assembly file
-* `<outputFile>`: Path where machine code will be written
-* `-r` (optional): Output raw binary instead of default format is readable hex-dump
+#### Arguments
+
+* `<sourceFile>`: Path to the input 8085 assembly (`.asm`) file. Can be relative or absolute.
+* `<outputFile>`: Path where the compiled machine code will be written. Can be relative or absolute.
+* `[options]` (optional flags):
+
+  | Flag           | Description                                                        |
+  | -------------- | ------------------------------------------------------------------ |
+  | `-r`           | Output raw binary (`.bin`) instead of the default Intel HEX format |
+  | `-d`           | Generate a human-readable memory dump of the compiled program      |
+  | `-h`, `--help` | Show this help message                                             |
+
+#### Examples
+
+Generate Intel HEX (default):
+
+```bash
+$> c85 program.asm program.hex
+```
+
+Generate raw binary:
+
+```bash
+$> c85 program.asm program.bin -r
+```
+
+Generate memory dump for inspection:
+
+```bash
+$> c85 program.asm program.dump -d
+```
+
+**Notes:**
+* If an output file already exists, it will be **overwritten**.
+---
 
 Example:
 
