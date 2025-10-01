@@ -7,7 +7,7 @@ static bool isDirective(TokenType tt) {
 static bool isMnemonic(TokenType tt) {
   uint16_t t = static_cast<uint16_t>(tt);
 
-  return (0 <= t && t < 79U);
+  return (0U <= t && t < 80U);
 }
 
 static optional<ast::Register> identToRegister(const string &ident) {
@@ -56,7 +56,8 @@ unordered_map<string, ast::symbolDebugInfo> &Parser::getSymbolTable() {
 void Parser::parseLine() {
   Token currToken = peek().value();
 
-  if (currToken.type == TokenType::Identifier) {
+  if (currToken.type == TokenType::Identifier ||
+      currToken.type == TokenType::HexOrIdent) {
     m_program->statements.emplace_back(parseLabelDef());
   } else if (isMnemonic(currToken.type)) {
     m_program->statements.emplace_back(parseMnemonic());
@@ -79,8 +80,18 @@ ast::Ptr<ASTLabelDef> Parser::parseLabelDef() {
   ast::Ptr<ASTLabelDef> labelDef = std::make_unique<ASTLabelDef>();
   Token label = consume();
 
+  if (m_symbolTable.find(label.rawText) != m_symbolTable.end()) {
+    Logger::fmtLog(LogLevel::Error,
+                   "Redefinition of label '%s' on line: %d, column: %d",
+                   label.rawText.c_str(), label.line, label.column);
+    exit(1);
+  }
+
   labelDef->tokenLabel = label;
-  labelDef->labelDbgInfo = {.lineNumber = label.line, .address = 0x0000};
+  labelDef->labelDbgInfo = {.lineNumber = label.line,
+                            .address = 0x0000,
+                            .flag = 1,
+                            .blockOffset = 0x0000};
 
   if (peek().has_value() && peek().value().type == TokenType::Colon)
     consume();
@@ -124,31 +135,30 @@ ast::Ptr<ASTMnemonics> Parser::parseMnemonic() {
   };
 
   switch (mnemonic->instruction) {
-  // TODO: Parse all mnemonics
   // Parse 'instruction <addr16>'
-  case ast::InstuctionType::LDA:
-  case ast::InstuctionType::LHLD:
-  case ast::InstuctionType::SHLD:
-  case ast::InstuctionType::STA:
+  case ast::InstructionType::LDA:
+  case ast::InstructionType::LHLD:
+  case ast::InstructionType::SHLD:
+  case ast::InstructionType::STA:
     mnemonic->operandList = parseOpList({ast::OperandType::ImmAddr});
     break;
 
   // Parse 'instruction <imm8>'
-  case ast::InstuctionType::ACI:
-  case ast::InstuctionType::ADI:
-  case ast::InstuctionType::ANI:
-  case ast::InstuctionType::CPI:
-  case ast::InstuctionType::IN:
-  case ast::InstuctionType::ORI:
-  case ast::InstuctionType::OUT:
-  case ast::InstuctionType::SBI:
-  case ast::InstuctionType::SUI:
-  case ast::InstuctionType::XRI:
+  case ast::InstructionType::ACI:
+  case ast::InstructionType::ADI:
+  case ast::InstructionType::ANI:
+  case ast::InstructionType::CPI:
+  case ast::InstructionType::IN:
+  case ast::InstructionType::ORI:
+  case ast::InstructionType::OUT:
+  case ast::InstructionType::SBI:
+  case ast::InstructionType::SUI:
+  case ast::InstructionType::XRI:
     mnemonic->operandList = parseOpList({ast::OperandType::ImmData});
     break;
 
   // Parse 'RST [0..7]'
-  case ast::InstuctionType::RST: {
+  case ast::InstructionType::RST: {
     mnemonic->operandList = parseOpList({ast::OperandType::ImmData});
     uint8_t val = getImmValue();
     if (val < 0 || val > 7) {
@@ -163,10 +173,10 @@ ast::Ptr<ASTMnemonics> Parser::parseMnemonic() {
 
   // Parse 'instruction <ex_reg>' ,
   // i.e, register pair + SP register (but not psw)
-  case ast::InstuctionType::DAD:
-  case ast::InstuctionType::DCX:
-  case ast::InstuctionType::INX:
-  case ast::InstuctionType::LXI: {
+  case ast::InstructionType::DAD:
+  case ast::InstructionType::DCX:
+  case ast::InstructionType::INX:
+  case ast::InstructionType::LXI: {
     // Main logic of the opcode
     mnemonic->operandList = parseOpList({ast::OperandType::exRegister});
     // Error handling for invalid operand type PSW
@@ -181,8 +191,8 @@ ast::Ptr<ASTMnemonics> Parser::parseMnemonic() {
   } break;
 
   // Parse LDAX ('B' | 'D') & STAX ('B' | 'D')
-  case ast::InstuctionType::LDAX:
-  case ast::InstuctionType::STAX: {
+  case ast::InstructionType::LDAX:
+  case ast::InstructionType::STAX: {
     mnemonic->operandList = parseOpList({ast::OperandType::exRegister});
     auto type = getExRegType();
 
@@ -196,8 +206,8 @@ ast::Ptr<ASTMnemonics> Parser::parseMnemonic() {
       exit(1);
     }
   } break;
-  case ast::InstuctionType::POP:
-  case ast::InstuctionType::PUSH: {
+  case ast::InstructionType::POP:
+  case ast::InstructionType::PUSH: {
     mnemonic->operandList = parseOpList({ast::OperandType::exRegister});
     auto type = getExRegType();
 
@@ -212,48 +222,48 @@ ast::Ptr<ASTMnemonics> Parser::parseMnemonic() {
   } break;
 
   // Parse 'instruction <reg>'
-  case ast::InstuctionType::ADC:
-  case ast::InstuctionType::ADD:
-  case ast::InstuctionType::ANA:
-  case ast::InstuctionType::CMP:
-  case ast::InstuctionType::DCR:
-  case ast::InstuctionType::INR:
-  case ast::InstuctionType::ORA:
-  case ast::InstuctionType::SBB:
-  case ast::InstuctionType::SUB:
-  case ast::InstuctionType::XRA:
+  case ast::InstructionType::ADC:
+  case ast::InstructionType::ADD:
+  case ast::InstructionType::ANA:
+  case ast::InstructionType::CMP:
+  case ast::InstructionType::DCR:
+  case ast::InstructionType::INR:
+  case ast::InstructionType::ORA:
+  case ast::InstructionType::SBB:
+  case ast::InstructionType::SUB:
+  case ast::InstructionType::XRA:
     mnemonic->operandList = parseOpList({ast::OperandType::_Register});
     break;
 
   // Parse 'instruction <labelRef>'
-  case ast::InstuctionType::CALL:
-  case ast::InstuctionType::CC:
-  case ast::InstuctionType::CM:
-  case ast::InstuctionType::CNC:
-  case ast::InstuctionType::CNZ:
-  case ast::InstuctionType::CP:
-  case ast::InstuctionType::CPE:
-  case ast::InstuctionType::CPO:
-  case ast::InstuctionType::CZ:
-  case ast::InstuctionType::JC:
-  case ast::InstuctionType::JM:
-  case ast::InstuctionType::JMP:
-  case ast::InstuctionType::JNC:
-  case ast::InstuctionType::JNZ:
-  case ast::InstuctionType::JP:
-  case ast::InstuctionType::JPE:
-  case ast::InstuctionType::JPO:
-  case ast::InstuctionType::JZ:
+  case ast::InstructionType::CALL:
+  case ast::InstructionType::CC:
+  case ast::InstructionType::CM:
+  case ast::InstructionType::CNC:
+  case ast::InstructionType::CNZ:
+  case ast::InstructionType::CP:
+  case ast::InstructionType::CPE:
+  case ast::InstructionType::CPO:
+  case ast::InstructionType::CZ:
+  case ast::InstructionType::JC:
+  case ast::InstructionType::JM:
+  case ast::InstructionType::JMP:
+  case ast::InstructionType::JNC:
+  case ast::InstructionType::JNZ:
+  case ast::InstructionType::JP:
+  case ast::InstructionType::JPE:
+  case ast::InstructionType::JPO:
+  case ast::InstructionType::JZ:
     mnemonic->operandList = parseOpList({ast::OperandType::LabelRef});
     break;
 
   // Parse double operand instructions MOV & MVI
-  case ast::InstuctionType::MOV:
+  case ast::InstructionType::MOV:
     // MOV r, r | MOV M, r
     mnemonic->operandList =
         parseOpList({ast::OperandType::_Register, ast::OperandType::_Register});
     break;
-  case ast::InstuctionType::MVI:
+  case ast::InstructionType::MVI:
     mnemonic->operandList =
         parseOpList({ast::OperandType::_Register, ast::OperandType::ImmData});
     break;
@@ -275,7 +285,8 @@ ast::Ptr<ASTDirective> Parser::parseDirective() {
     directive->type = ast::DirectiveType::ORG;
     ast::Ptr<ASTImmAddr> addr = std::make_unique<ASTImmAddr>();
 
-    if (peek().has_value() && peek().value().type == TokenType::Number) {
+    if (peek().has_value() && (peek().value().type == TokenType::Number ||
+                               peek().value().type == TokenType::HexOrIdent)) {
       addr->tokenAddr = peek().value();
       addr->value = parseNumber<uint16_t>();
     } else {
@@ -290,7 +301,8 @@ ast::Ptr<ASTDirective> Parser::parseDirective() {
     directive->type = ast::DirectiveType::DB;
     ast::Ptr<ASTImmData> data = std::make_unique<ASTImmData>();
 
-    if (peek().has_value() && peek().value().type == TokenType::Number) {
+    if (peek().has_value() && (peek().value().type == TokenType::Number ||
+                               peek().value().type == TokenType::HexOrIdent)) {
       data->tokenData = peek().value();
       data->value = parseNumber<uint8_t>();
     } else {
@@ -361,7 +373,8 @@ ast::Ptr<ASTOperand> Parser::parseOperand(const ast::OperandType &expectType) {
 
   switch (expectType) {
   case ast::OperandType::ImmData:
-    if (operandToken.type == TokenType::Number) {
+    if (operandToken.type == TokenType::Number ||
+        operandToken.type == TokenType::HexOrIdent) {
       ast::Ptr<ASTImmData> immData = std::make_unique<ASTImmData>();
       immData->tokenData = operandToken;
       immData->value = parseNumber<uint8_t>();
@@ -376,7 +389,8 @@ ast::Ptr<ASTOperand> Parser::parseOperand(const ast::OperandType &expectType) {
     }
     break;
   case ast::OperandType::ImmAddr:
-    if (operandToken.type == TokenType::Number) {
+    if (operandToken.type == TokenType::Number ||
+        operandToken.type == TokenType::HexOrIdent) {
       ast::Ptr<ASTImmAddr> immAddr = std::make_unique<ASTImmAddr>();
       immAddr->tokenAddr = operandToken;
       immAddr->value = parseNumber<uint16_t>();
@@ -391,7 +405,8 @@ ast::Ptr<ASTOperand> Parser::parseOperand(const ast::OperandType &expectType) {
     }
     break;
   case ast::OperandType::_Register:
-    if (operandToken.type == TokenType::Identifier &&
+    if ((operandToken.type == TokenType::Identifier ||
+         operandToken.type == TokenType::HexOrIdent) &&
         identToRegister(operandToken.rawText).has_value()) {
       ast::Ptr<ASTRegister> reg = std::make_unique<ASTRegister>();
       reg->tokenRegister = operandToken;
@@ -408,7 +423,8 @@ ast::Ptr<ASTOperand> Parser::parseOperand(const ast::OperandType &expectType) {
     }
     break;
   case ast::OperandType::exRegister:
-    if (operandToken.type == TokenType::Identifier &&
+    if ((operandToken.type == TokenType::Identifier ||
+         operandToken.type == TokenType::HexOrIdent) &&
         identToSpRegister(operandToken.rawText).has_value()) {
       ast::Ptr<ASTExtendedRegister> spReg =
           std::make_unique<ASTExtendedRegister>();
@@ -426,8 +442,8 @@ ast::Ptr<ASTOperand> Parser::parseOperand(const ast::OperandType &expectType) {
     }
     break;
   case ast::OperandType::LabelRef:
-    // TODO: Verify the Label isn't part of recognized words
-    if (peek().has_value() && peek().value().type == TokenType::Identifier) {
+    if (peek().has_value() && (peek().value().type == TokenType::Identifier ||
+                               peek().value().type == TokenType::HexOrIdent)) {
       ast::Ptr<ASTLabelRef> labelRef = std::make_unique<ASTLabelRef>();
       labelRef->label = operandToken;
       consume(); // Manually consume this token
@@ -436,7 +452,8 @@ ast::Ptr<ASTOperand> Parser::parseOperand(const ast::OperandType &expectType) {
     } else {
       Logger::fmtLog(LogLevel::Error,
                      "Expected a label, but found '%s' on line: %d, column: %d",
-                     operandToken);
+                     operandToken.rawText, operandToken.line,
+                     operandToken.column);
       exit(1);
     }
     break;
