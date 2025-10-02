@@ -53,10 +53,11 @@ Parser::Parser(vector<Token> &tokens)
     : m_tokens(move(tokens)), m_program(std::make_unique<ASTProgram>()) {}
 
 ast::Ptr<ASTProgram> &Parser::parseProgram() {
-  while (peek().has_value()) {
-    if (peek().value().type == TokenType::EndOfFile)
-      break;
-    parseLine();
+  while (peek().has_value() && peek()->type != TokenType::EndOfFile) {
+    if (peek()->type == TokenType::EndOfLine)
+      consume();
+    else
+      parseLine();
   }
   return m_program;
 }
@@ -90,7 +91,7 @@ void Parser::parseLine() {
     }
   }
 
-  if (peek().has_value() && peek().value().type == TokenType::EndOfLine) {
+  if (peek().has_value() && peek()->type == TokenType::EndOfLine) {
     consume();
   } else {
     Logger::fmtLog(LogLevel::Error,
@@ -118,7 +119,7 @@ ast::Ptr<ASTLabelDef> Parser::parseLabelDef() {
                             .flag = 1,
                             .blockOffset = 0x0000};
 
-  if (peek().has_value() && peek().value().type == TokenType::Colon)
+  if (peek().has_value() && peek()->type == TokenType::Colon)
     consume();
   else {
     Logger::fmtLog(LogLevel::Error,
@@ -127,13 +128,13 @@ ast::Ptr<ASTLabelDef> Parser::parseLabelDef() {
     exit(1);
   }
 
-  if (peek().has_value() && isMnemonic(peek().value().type))
+  if (peek().has_value() && isMnemonic(peek()->type))
     labelDef->mnemonic = parseMnemonic();
   else {
     Logger::fmtLog(
         LogLevel::Error,
         "Expected a instruction after label '%s', on line: %d, column = %d",
-        label.rawText.c_str(), label.line, peek(-1).value().column);
+        label.rawText.c_str(), label.line, peek(-1)->column);
     exit(1);
   }
 
@@ -310,8 +311,8 @@ ast::Ptr<ASTDirective> Parser::parseDirective() {
     directive->type = ast::DirectiveType::ORG;
     ast::Ptr<ASTImmAddr> addr = std::make_unique<ASTImmAddr>();
 
-    if (peek().has_value() && (peek().value().type == TokenType::Number ||
-                               peek().value().type == TokenType::HexOrIdent)) {
+    if (peek().has_value() && (peek()->type == TokenType::Number ||
+                               peek()->type == TokenType::HexOrIdent)) {
       addr->tokenAddr = peek().value();
       addr->value = parseNumber<uint16_t>();
     } else {
@@ -326,8 +327,8 @@ ast::Ptr<ASTDirective> Parser::parseDirective() {
     directive->type = ast::DirectiveType::DB;
     ast::Ptr<ASTImmData> data = std::make_unique<ASTImmData>();
 
-    if (peek().has_value() && (peek().value().type == TokenType::Number ||
-                               peek().value().type == TokenType::HexOrIdent)) {
+    if (peek().has_value() && (peek()->type == TokenType::Number ||
+                               peek()->type == TokenType::HexOrIdent)) {
       data->tokenData = peek().value();
       data->value = parseNumber<uint8_t>();
     } else {
@@ -358,8 +359,7 @@ Parser::parseOpList(const vector<ast::OperandType> &expectTypes) {
     Logger::fmtLog(LogLevel::Error,
                    "Expected a first operand, instead found '%s' at line: "
                    "%d, column: %d",
-                   peek(-1).value().rawText.c_str(), peek(-1).value().line,
-                   peek(-1).value().column);
+                   peek(-1)->rawText.c_str(), peek(-1)->line, peek(-1)->column);
     exit(1);
   }
 
@@ -367,13 +367,12 @@ Parser::parseOpList(const vector<ast::OperandType> &expectTypes) {
     return operandList;
 
   // Expect a comma token before the 2nd operand
-  if (peek().has_value() && peek().value().type == TokenType::Comma)
+  if (peek().has_value() && peek()->type == TokenType::Comma)
     consume();
   else {
     Logger::fmtLog(LogLevel::Error,
                    "Expected a comma ',' after '%s' at line: %d, column: %d",
-                   peek(-1).value().rawText.c_str(), peek(-1).value().line,
-                   peek(-1).value().column);
+                   peek(-1)->rawText.c_str(), peek(-1)->line, peek(-1)->column);
     exit(1);
   }
 
@@ -384,8 +383,7 @@ Parser::parseOpList(const vector<ast::OperandType> &expectTypes) {
     Logger::fmtLog(LogLevel::Error,
                    "Expected a second operand, instead found '%s' at line: "
                    "%d, column: %d",
-                   peek(-1).value().rawText.c_str(), peek(-1).value().line,
-                   peek(-1).value().column);
+                   peek(-1)->rawText.c_str(), peek(-1)->line, peek(-1)->column);
     exit(1);
   }
   return operandList;
@@ -467,8 +465,8 @@ ast::Ptr<ASTOperand> Parser::parseOperand(const ast::OperandType &expectType) {
     }
     break;
   case ast::OperandType::LabelRef:
-    if (peek().has_value() && (peek().value().type == TokenType::Identifier ||
-                               peek().value().type == TokenType::HexOrIdent)) {
+    if (peek().has_value() && (peek()->type == TokenType::Identifier ||
+                               peek()->type == TokenType::HexOrIdent)) {
       ast::Ptr<ASTLabelRef> labelRef = std::make_unique<ASTLabelRef>();
       labelRef->label = operandToken;
       consume(); // Manually consume this token

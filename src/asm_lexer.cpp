@@ -170,7 +170,7 @@ vector<Token> Lexer::tokenize() {
     } else if (curr == ':') {
       tokens.emplace_back(createToken(TokenType::Colon, string(1, curr)));
     } else if (curr == ';') {
-      // Start of comment, skip until end of line
+      // Start of comment, skip until end of line or end of file
       while (peek().has_value() && peek().value() != '\n')
         consume();
     } else {
