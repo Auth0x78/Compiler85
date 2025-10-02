@@ -2,6 +2,7 @@ import sys
 import os
 import subprocess
 import time
+import re
 
 # ANSI color codes
 class Colors:
@@ -83,7 +84,7 @@ def main():
             actual_return = result.returncode
             actual_stdout = result.stdout.strip()
             actual_stderr = result.stderr.strip()
-            actual_combined = (actual_stdout + "\n" + actual_stderr).strip()
+            actual_combined = re.sub(r'\x1B\[[0-?]*[ -/]*[@-~]', '', (actual_stdout + "\n" + actual_stderr)).strip()
 
             # Show stdout and stderr
             if actual_stdout:
@@ -111,7 +112,7 @@ def main():
                         passed = False
                 else:
                     # Error cases
-                    if actual_combined != expected_output:
+                    if actual_combined.strip().replace('\r\n', '\n') != expected_output.strip().replace('\r\n', '\n'):
                         print(f"{Colors.FAIL}FAIL: Error output mismatch{Colors.RESET}")
                         print(f"Expected:\n{expected_output}\nGot:\n{actual_combined}")
                         passed = False

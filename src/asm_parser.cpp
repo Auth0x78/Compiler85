@@ -14,7 +14,21 @@ static optional<ast::Register> identToRegister(const string &ident) {
   if (ident.size() > 1)
     return {};
 
-  return static_cast<ast::Register>(ident[0]);
+  // Verify if the ident is a valid register
+  switch (ident[0]) {
+  case 'A':
+  case 'B':
+  case 'C':
+  case 'D':
+  case 'E':
+  case 'H':
+  case 'L':
+  case 'M':
+    return static_cast<ast::Register>(ident[0]);
+  default:
+    break;
+  }
+  return {};
 }
 
 static optional<ast::ExtendedRegister> identToSpRegister(const string &ident) {
@@ -56,13 +70,24 @@ unordered_map<string, ast::symbolDebugInfo> &Parser::getSymbolTable() {
 void Parser::parseLine() {
   Token currToken = peek().value();
 
-  if (currToken.type == TokenType::Identifier ||
-      currToken.type == TokenType::HexOrIdent) {
-    m_program->statements.emplace_back(parseLabelDef());
-  } else if (isMnemonic(currToken.type)) {
+  if (isMnemonic(currToken.type)) {
     m_program->statements.emplace_back(parseMnemonic());
+
   } else if (isDirective(currToken.type)) {
     m_program->statements.emplace_back(parseDirective());
+
+  } else if (currToken.type == TokenType::Identifier ||
+             currToken.type == TokenType::HexOrIdent) {
+
+    if (peek(1).has_value() && peek(1)->type == TokenType::Colon)
+      m_program->statements.emplace_back(parseLabelDef());
+    else {
+      Logger::fmtLog(
+          LogLevel::Error,
+          "Unknown mnemonic or invalid statement '%s' on line %d, column %d",
+          currToken.rawText.c_str(), currToken.line, currToken.column);
+      exit(1);
+    }
   }
 
   if (peek().has_value() && peek().value().type == TokenType::EndOfLine) {
@@ -330,11 +355,11 @@ Parser::parseOpList(const vector<ast::OperandType> &expectTypes) {
   if (peek().has_value())
     operandList->first = parseOperand(expectTypes[0]);
   else {
-    Logger::fmtLog(
-        LogLevel::Error,
-        "Expected a first operand, instead found '%s' at line: %d, column: %d",
-        peek(-1).value().rawText.c_str(), peek(-1).value().line,
-        peek(-1).value().column);
+    Logger::fmtLog(LogLevel::Error,
+                   "Expected a first operand, instead found '%s' at line: "
+                   "%d, column: %d",
+                   peek(-1).value().rawText.c_str(), peek(-1).value().line,
+                   peek(-1).value().column);
     exit(1);
   }
 

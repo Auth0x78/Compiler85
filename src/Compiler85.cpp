@@ -11,6 +11,7 @@ int main(int argc, char *argv[]) {
   bool rawBinary = false;
   // new flag for MemoryDumpView
   bool memoryDumpView = false;
+  bool debugNoArgs = false;
 
   // Help printer
   auto printHelp = []() {
@@ -39,33 +40,36 @@ int main(int argc, char *argv[]) {
     cin >> outputFile;
     rawBinary = false;
     memoryDumpView = true;
+    debugNoArgs = true;
 #else
     printHelp();
     return 1;
 #endif
   }
 
-  // Handle explicit help request
-  if (string(argv[1]) == "-h" || string(argv[1]) == "--help") {
-    printHelp();
-    return 0;
-  }
-
-  sourceFile = argv[1];
-  outputFile = argv[2];
-
-  // Parse optional flags
-  for (int i = 3; i < argc; i++) {
-    string arg = argv[i];
-    if (arg == "-r") {
-      rawBinary = true;
-    } else if (arg == "-d") {
-      memoryDumpView = true;
-    } else if (arg == "-h" || arg == "--help") {
+  if (!debugNoArgs) {
+    // Handle explicit help request
+    if (string(argv[1]) == "-h" || string(argv[1]) == "--help") {
       printHelp();
       return 0;
-    } else {
-      Logger::fmtLog(LogLevel::Warning, "Unknown option: %s", arg.c_str());
+    }
+
+    sourceFile = argv[1];
+    outputFile = argv[2];
+
+    // Parse optional flags
+    for (int i = 3; i < argc; i++) {
+      string arg = argv[i];
+      if (arg == "-r") {
+        rawBinary = true;
+      } else if (arg == "-d") {
+        memoryDumpView = true;
+      } else if (arg == "-h" || arg == "--help") {
+        printHelp();
+        return 0;
+      } else {
+        Logger::fmtLog(LogLevel::Warning, "Unknown option: %s", arg.c_str());
+      }
     }
   }
 
