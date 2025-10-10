@@ -420,6 +420,7 @@ void AsmGenerator::GenerateMnemonics(const ast::Ptr<ASTMnemonics> &mnemonic) {
       errorMsg = "Expected a register pair for LXI "
                  "instruction on line: %d, "
                  "column: %d";
+    GenerateImmOperands(secondOperand, ast::OperandType::ImmAddr);
   } break;
   case ast::InstructionType::ORA: {
     uint8_t baseOpcode = 0xB0;

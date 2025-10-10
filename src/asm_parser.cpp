@@ -201,8 +201,7 @@ ast::Ptr<ASTMnemonics> Parser::parseMnemonic() {
   // i.e, register pair + SP register (but not psw)
   case ast::InstructionType::DAD:
   case ast::InstructionType::DCX:
-  case ast::InstructionType::INX:
-  case ast::InstructionType::LXI: {
+  case ast::InstructionType::INX: {
     // Main logic of the opcode
     mnemonic->operandList = parseOpList({ast::OperandType::exRegister});
     // Error handling for invalid operand type PSW
@@ -215,7 +214,21 @@ ast::Ptr<ASTMnemonics> Parser::parseMnemonic() {
       exit(1);
     }
   } break;
-
+    // Parse instruction <ex_reg>, immAddr
+  case ast::InstructionType::LXI: {
+    // Main logic of the opcode
+    mnemonic->operandList =
+        parseOpList({ast::OperandType::exRegister, ast::OperandType::ImmAddr});
+    // Error handling for invalid operand type PSW
+    if (getExRegType() == ast::ExtendedRegister::PSW) {
+      auto &token = mnemonic->tokenMnemonic;
+      Logger::fmtLog(LogLevel::Error,
+                     "Invalid Operand: 'PSW' for the instruction: 'LXI'"
+                     " on line: %d, column: %d",
+                     token.line, token.column);
+      exit(1);
+    }
+  } break;
   // Parse LDAX ('B' | 'D') & STAX ('B' | 'D')
   case ast::InstructionType::LDAX:
   case ast::InstructionType::STAX: {
