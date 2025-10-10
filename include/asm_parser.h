@@ -1,7 +1,7 @@
 #pragma once
-
 #include <ASTStructs.h>
 #include <asm_lexer.h>
+#include <cmath>
 #include <memory>
 #include <variant>
 #include <vector>

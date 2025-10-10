@@ -2,15 +2,19 @@
 #include "ASTStructs.h"
 
 using namespace std;
-
-#define UNREACHABLE(fmt, ...)                                                  \
-  {                                                                            \
-    Logger::fmtLog(LogLevel::Error, "[GEN, Line: %d]: " fmt, __LINE__ - 1,     \
-                   __VA_ARGS__);                                               \
-    exit(0x00BAD);                                                             \
-  }
-
 constexpr int DEFAULT_BLOCK_SIZE = 32;
+
+[[noreturn]] inline void Unreachable(int line, const char *fmt, ...) {
+  char buffer[512];
+  va_list args;
+  va_start(args, fmt);
+  vsnprintf(buffer, sizeof(buffer), fmt, args);
+  va_end(args);
+
+  // Match your exact macro’s format
+  Logger::fmtLog(LogLevel::Error, "[GEN, Line: %d]: %s", line - 1, buffer);
+  std::exit(0x00BAD);
+}
 
 struct BinaryBlock {
   uint16_t startAddr;

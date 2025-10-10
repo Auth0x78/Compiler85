@@ -44,7 +44,7 @@ void AsmGenerator::GenerateStatement(ASTStatement &stmt) {
     AsmGenerator *gen;
     void operator()(const ast::Ptr<ASTLabelDef> &labelDef) {
       if (!labelDef)
-        UNREACHABLE("Label Definition was null in code generation!");
+        Unreachable(__LINE__, "Label Definition was null in code generation!");
       BinaryBlock &block = gen->GetCurrentBlock();
       // Update symbol table with current address
       auto &[line, addr, flag, blockOffset] =
@@ -68,12 +68,14 @@ void AsmGenerator::GenerateStatement(ASTStatement &stmt) {
         if (gen->m_blocks[blockID][(size_t)offset + 1] = 0xff)
           gen->m_blocks[blockID][(size_t)offset + 1] = low;
         else
-          UNREACHABLE(
+          Unreachable(
+              __LINE__,
               "Resolving unresolved label failed, block offset already used");
         if (gen->m_blocks[blockID][(size_t)offset + 2] = 0xff)
           gen->m_blocks[blockID][(size_t)offset + 2] = high;
         else
-          UNREACHABLE("Resolving unresolved label failed, block offset + 1 "
+          Unreachable(__LINE__,
+                      "Resolving unresolved label failed, block offset + 1 "
                       "already used");
 
         gen->m_unresolvedLabel.erase(labelDef->tokenLabel.rawText);
@@ -81,17 +83,17 @@ void AsmGenerator::GenerateStatement(ASTStatement &stmt) {
 
       // Now generate the mnemonic associated with the label
       if (!labelDef->mnemonic)
-        UNREACHABLE("Mnemonic was null in label definition!");
+        Unreachable(__LINE__, "Mnemonic was null in label definition!");
       gen->GenerateMnemonics(labelDef->mnemonic);
     }
     void operator()(const ast::Ptr<ASTMnemonics> &mnemonic) {
       if (!mnemonic)
-        UNREACHABLE("Mnemonic was null in code generation!");
+        Unreachable(__LINE__, "Mnemonic was null in code generation!");
       gen->GenerateMnemonics(mnemonic);
     }
     void operator()(const ast::Ptr<ASTDirective> &directive) {
       if (!directive)
-        UNREACHABLE("Directive was null in code generation!");
+        Unreachable(__LINE__, "Directive was null in code generation!");
 
       switch (directive->type) {
       case ast::DirectiveType::ORG: {
@@ -121,7 +123,7 @@ void AsmGenerator::GenerateStatement(ASTStatement &stmt) {
 
 void AsmGenerator::GenerateMnemonics(const ast::Ptr<ASTMnemonics> &mnemonic) {
   if (!mnemonic)
-    UNREACHABLE("Mnemonic was null in code generation!");
+    Unreachable(__LINE__, "Mnemonic was null in code generation!");
   BinaryBlock &block = GetCurrentBlock();
   const char *errorMsg = nullptr;
 
@@ -561,7 +563,7 @@ void AsmGenerator::GenerateMnemonics(const ast::Ptr<ASTMnemonics> &mnemonic) {
     GenerateImmOperands(secondOperand, ast::OperandType::ImmData);
   } break;
   default:
-    UNREACHABLE("Instruction '%s' NYI!",
+    Unreachable(__LINE__, "Instruction '%s' NYI!",
                 mnemonic->tokenMnemonic.rawText.c_str());
     break;
   }
@@ -581,14 +583,16 @@ void AsmGenerator::GenerateImmOperands(const ast::Ptr<ASTOperand> &operand,
 
     void operator()(const ast::Ptr<ASTLabelRef> &labelRef) {
       if (!labelRef)
-        UNREACHABLE("Label Reference is null!");
+        Unreachable(__LINE__, "Label Reference is null!");
       if (expectedType != ast::OperandType::LabelRef)
-        UNREACHABLE(
+        Unreachable(
+            __LINE__,
             "Expected a label reference operand, but got something else!");
 
       const string &labelT = labelRef->label.rawText;
       if (gen->m_symbolTable.find(labelT) == gen->m_symbolTable.end())
-        UNREACHABLE("Label '%s' not found in symbol table!", labelT.c_str());
+        Unreachable(__LINE__, "Label '%s' not found in symbol table!",
+                    labelT.c_str());
 
       const auto &[line, absAddr, flag, blockOffset] =
           gen->m_symbolTable[labelT];
@@ -606,24 +610,26 @@ void AsmGenerator::GenerateImmOperands(const ast::Ptr<ASTOperand> &operand,
         gen->GetCurrentBlock().AppendData({0xff, 0xff});
       } else {
         // Cant reach here, but still for safety
-        UNREACHABLE("Label was defined, but flag was set to 0!");
+        Unreachable(__LINE__, "Label was defined, but flag was set to 0!");
       }
     }
 
     void operator()(const ast::Ptr<ASTImmData> &immData) {
       if (!immData)
-        UNREACHABLE("Immediate Data is null!");
+        Unreachable(__LINE__, "Immediate Data is null!");
       if (expectedType != ast::OperandType::ImmData)
-        UNREACHABLE(
+        Unreachable(
+            __LINE__,
             "Expected a Immediate Data operand, but got something else!");
       gen->GetCurrentBlock().AppendByte(immData->value);
     }
 
     void operator()(const ast::Ptr<ASTImmAddr> &immAddr) {
       if (!immAddr)
-        UNREACHABLE("Immediate Address is null!");
+        Unreachable(__LINE__, "Immediate Address is null!");
       if (expectedType != ast::OperandType::ImmAddr)
-        UNREACHABLE(
+        Unreachable(
+            __LINE__,
             "Expected a Immediate Address operand, but got something else!");
 
       uint8_t low = immAddr->value & 0xff;
@@ -632,10 +638,10 @@ void AsmGenerator::GenerateImmOperands(const ast::Ptr<ASTOperand> &operand,
     }
 
     void operator()(const ast::Ptr<ASTRegister> &immData) {
-      UNREACHABLE("Invalid immediate operand: got register");
+      Unreachable(__LINE__, "Invalid immediate operand: got register");
     }
     void operator()(const ast::Ptr<ASTExtendedRegister> &immData) {
-      UNREACHABLE("Invalid immediate operand: got extended register");
+      Unreachable(__LINE__, "Invalid immediate operand: got extended register");
     }
   };
 
@@ -643,7 +649,7 @@ void AsmGenerator::GenerateImmOperands(const ast::Ptr<ASTOperand> &operand,
     std::visit(ASTOperandVisitor{.gen = this, .expectedType = expectedType},
                operand->val);
   else
-    UNREACHABLE("Failed to generate operand, value was NULL!");
+    Unreachable(__LINE__, "Failed to generate operand, value was NULL!");
 }
 
 int AsmGenerator::TryRegisterMap(const ast::Ptr<ASTOperand> &operand) {
