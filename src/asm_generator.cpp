@@ -26,6 +26,7 @@ void AsmGenerator::GenerateBinary() {
 
   if (m_unresolvedLabel.size() != 0) {
     for (const auto &[label, info] : m_unresolvedLabel) {
+      // TODO: Find line and column info from symbol table
       Logger::fmtLog(
           "Label Reference: '%s' on line: %d, column: %d was never defined!",
           label, -1, -1);
@@ -51,33 +52,20 @@ void AsmGenerator::GenerateStatement(ASTStatement &stmt) {
           gen->m_symbolTable[labelDef->tokenLabel.rawText];
       flag = 2;
       blockOffset = block.code.size();
-      // TODO: verify correctness
       addr = block.startAddr + blockOffset;
 
       // Resolve any unresolved references to this label
       auto it = gen->m_unresolvedLabel.find(labelDef->tokenLabel.rawText);
       if (it != gen->m_unresolvedLabel.end()) {
+        for (const auto &[block_id, block_offset] : it->second) {
+          // Resolve high and low order address
+          gen->m_blocks[block_id][(size_t)block_offset + 0] =
+              static_cast<uint8_t>(addr & 0xFF);
+          gen->m_blocks[block_id][(size_t)block_offset + 1] =
+              static_cast<uint8_t>(addr >> 8);
+        }
 
-        const auto &[blockID, offset] = it->second;
-
-        uint8_t low = addr & 0xff;
-        uint8_t high = (addr >> 8) & 0xff;
-
-        // TODO: Only for debugging check if the memory locations are unused
-        // Remove these extra checks later
-        if (gen->m_blocks[blockID][(size_t)offset + 1] = 0xff)
-          gen->m_blocks[blockID][(size_t)offset + 1] = low;
-        else
-          Unreachable(
-              __LINE__,
-              "Resolving unresolved label failed, block offset already used");
-        if (gen->m_blocks[blockID][(size_t)offset + 2] = 0xff)
-          gen->m_blocks[blockID][(size_t)offset + 2] = high;
-        else
-          Unreachable(__LINE__,
-                      "Resolving unresolved label failed, block offset + 1 "
-                      "already used");
-
+        // Clear the entire unresolved label table
         gen->m_unresolvedLabel.erase(labelDef->tokenLabel.rawText);
       }
 
@@ -422,6 +410,8 @@ void AsmGenerator::GenerateMnemonics(const ast::Ptr<ASTMnemonics> &mnemonic) {
       errorMsg = "Expected a register pair for LXI "
                  "instruction on line: %d, "
                  "column: %d";
+    // LXI doesnt actually take ImmAddr, but instead a 16 bit data but for now
+    // as a workaround, will consider it uses 16 bit data
     GenerateImmOperands(secondOperand, ast::OperandType::ImmAddr);
   } break;
   case ast::InstructionType::ORA: {
@@ -598,16 +588,17 @@ void AsmGenerator::GenerateImmOperands(const ast::Ptr<ASTOperand> &operand,
           gen->m_symbolTable[labelT];
       // LOW ADDR then HIGH ADDR
       if (flag == 2) {
+        // Label defined
         uint8_t low = absAddr & 0xff;
         uint8_t high = (absAddr >> 8) & 0xff;
         gen->GetCurrentBlock().AppendData({low, high});
       } else if (flag == 1) {
         // Label referenced before its definition
         // So, add the current label to unresolved label list
-        gen->m_unresolvedLabel[labelT] = {gen->blockIndex, blockOffset};
-
         // Reserve 2 bytes for the address
-        gen->GetCurrentBlock().AppendData({0xff, 0xff});
+        uint16_t block_offset = gen->GetCurrentBlock().AppendData({0xff, 0xff});
+        gen->m_unresolvedLabel[labelT].push_back(
+            {gen->blockIndex, block_offset});
       } else {
         // Cant reach here, but still for safety
         Unreachable(__LINE__, "Label was defined, but flag was set to 0!");

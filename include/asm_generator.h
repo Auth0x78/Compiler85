@@ -52,12 +52,12 @@ struct BinaryBlock {
   // Helper function, returns the absolute address of the byte pushed
   uint16_t AppendByte(uint8_t byte) {
     code.push_back(byte);
-    return startAddr + code.size() - 1;
+    return code.size() - 1;
   }
 
   uint16_t AppendData(const vector<uint8_t> &data) {
     code.insert(code.end(), data.begin(), data.end());
-    return startAddr + code.size() - data.size();
+    return code.size() - data.size();
   }
 };
 
@@ -90,7 +90,7 @@ public:
   unordered_map<string, ast::symbolDebugInfo> m_symbolTable;
 
   // Store the block id, block offset to where the unresolved label is found
-  unordered_map<string, pair<size_t, uint16_t>> m_unresolvedLabel;
+  unordered_map<string, vector<pair<size_t, uint16_t>>> m_unresolvedLabel;
   vector<BinaryBlock> m_blocks;
   ast::Ptr<ASTProgram> m_program;
 };

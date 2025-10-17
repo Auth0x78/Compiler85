@@ -214,9 +214,10 @@ ast::Ptr<ASTMnemonics> Parser::parseMnemonic() {
       exit(1);
     }
   } break;
-    // Parse instruction <ex_reg>, immAddr
+    // Parse instruction <ex_reg>, immData
   case ast::InstructionType::LXI: {
     // Main logic of the opcode
+    // Workaround for parsing 16 bit data, we treat it as ImmAddr input
     mnemonic->operandList =
         parseOpList({ast::OperandType::exRegister, ast::OperandType::ImmAddr});
     // Error handling for invalid operand type PSW
